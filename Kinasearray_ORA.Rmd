@@ -1,0 +1,87 @@
+---
+title: "Kinase array - Pathway/GO analysis"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+```{r}
+library(clusterProfiler)
+library(xlsx)
+library(org.Hs.eg.db)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+```
+
+# load data
+```{r}
+
+# genetable = xlsx::read.xlsx(file = 'G:/colleagues/Emiel/Kinase analysis_STK-N2 00h vs C_Test Chang.xls',sheetIndex = 1)
+genetable = xlsx::read.xlsx(file = 'G:/colleagues/Emiel/STK Fig Metacore proteomap etc.xlsx',sheetIndex = 1)
+
+gene=genetable %>% filter(Median.Final.score>1.2)  %>%  dplyr::select(Kinase.Uniprot.ID)
+
+ids <- bitr(gene$Kinase.Uniprot.ID, fromType="UNIPROT", toType=c("ENTREZID", "SYMBOL"), OrgDb="org.Hs.eg.db")
+
+```
+
+# set your save path
+```{r}
+savepath = 'G:/colleagues/Emiel/'
+
+```
+
+
+# GO enrichment analysis
+```{r}
+ego <- enrichGO(gene         = ids$SYMBOL,
+                OrgDb         = org.Hs.eg.db,
+                keyType       = 'SYMBOL',
+                ont           = "BP",
+                pAdjustMethod = "fdr",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 1)
+bp <- simplify(ego, cutoff=0.7, by="p.adjust", select_fun=min)
+p=dotplot(bp, showCategory=20) + ggtitle("dotplot for ORA")
+
+jpeg(filename = paste0(savepath,'STK Fig Metacore proteomap GOBP.jpg'),height = 650,width = 450)
+print(p)
+dev.off()
+
+```
+
+# KEGG enrichment analysis
+```{r}
+ke <- enrichKEGG(gene         = ids$ENTREZID,
+                 organism     = 'hsa',
+                 pvalueCutoff =0.05)
+p=dotplot(ke, showCategory=20) + ggtitle("dotplot for ORA")
+
+jpeg(filename = paste0(savepath,'STK Fig Metacore proteomap KEGG.jpg'),height = 550,width = 450)
+print(p)
+dev.off()
+```
+
+
+# Wikipathway enrichment analysis
+```{r}
+wp <- enrichWP(ids$ENTREZID, organism = "Homo sapiens") 
+p=dotplot(wp, showCategory=20) + ggtitle("dotplot for ORA")
+jpeg(filename =paste0(savepath,'STK Fig Metacore proteomap Wikipathway.jpg'),height = 600,width = 450)
+print(p)
+dev.off()
+
+```
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
