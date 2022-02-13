@@ -1,4 +1,4 @@
-# Small-Rnotebooks
+# Kinase array : Pathway/GO ORA
 
 Require packages:
 clusterProfiler
